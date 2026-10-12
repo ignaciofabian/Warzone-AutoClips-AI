@@ -29,3 +29,6 @@ clips/processed/*
 # Bases de datos locales
 *.db
 *.sqlite3
+
+# Datos generados localmente
+data/
