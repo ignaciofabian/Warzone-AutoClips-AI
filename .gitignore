@@ -1,0 +1,31 @@
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+.env.*
+
+# Node / React
+node_modules/
+dist/
+frontend/dist/
+
+# Videos y grabaciones
+clips/raw/*
+clips/processed/*
+!clips/raw/.gitkeep
+!clips/processed/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+
+# Archivos temporales
+*.log
+*.tmp
+
+# Bases de datos locales
+*.db
+*.sqlite3
