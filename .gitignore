@@ -32,3 +32,8 @@ clips/processed/*
 
 # Datos generados localmente
 data/
+
+# Videos generados por Warzone AutoClips AI
+/clips/raw/
+/clips/highlights/
+/clips/processed/
