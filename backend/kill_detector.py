@@ -1,14 +1,59 @@
 
 from pathlib import Path
 import sys
+import time
 
 import cv2
-import easyocr
 
 
 # Inicializamos OCR una sola vez.
 # CPU evita problemas de compatibilidad CUDA al comenzar.
-reader = easyocr.Reader(["es", "en"], gpu=False)
+reader = None
+
+
+def get_reader(*, download_enabled=True, threads=1):
+    """Carga diferida: los imports y las pruebas no descargan modelos."""
+    global reader
+    if reader is None:
+        import torch
+        import easyocr
+
+        torch.set_num_threads(threads)
+        cv2.setNumThreads(threads)
+        reader = easyocr.Reader(
+            ["es", "en"], gpu=False, download_enabled=download_enabled
+        )
+    return reader
+
+
+def leer_confirmacion(zona, *, min_confidence=0.65, max_width=640, detailed=False):
+    """OCR acotado de una ROI BGR; sin GPU ni descarga durante la partida."""
+    started = time.perf_counter()
+    original_shape = list(zona.shape[:2])
+    if zona.shape[1] > max_width:
+        scale = max_width / zona.shape[1]
+        zona = cv2.resize(zona, None, fx=scale, fy=scale)
+    results = get_reader(download_enabled=False).readtext(
+        zona, detail=1, batch_size=1, workers=0, paragraph=False
+    )
+    # EasyOCR puede separar el prefijo y el nombre en cajas distintas.
+    confident = [str(text) for _, text, confidence in results
+                 if confidence >= min_confidence]
+    text = " ".join(confident)
+    if not detailed:
+        return text
+    return {
+        "text": text,
+        "raw_text": " ".join(str(text) for _, text, _ in results),
+        "ocr_seconds": time.perf_counter() - started,
+        "input_shape": original_shape,
+        "ocr_shape": list(zona.shape[:2]),
+        "min_confidence": min_confidence,
+        "boxes": [{"text": str(text), "confidence": float(confidence),
+                   "accepted": bool(confidence >= min_confidence),
+                   "bbox": [[float(x), float(y)] for x, y in bbox]}
+                  for bbox, text, confidence in results],
+    }
 
 
 def detectar_kills(ruta_imagen):
@@ -38,7 +83,7 @@ def detectar_kills(ruta_imagen):
         ("puntos", zona_puntos),
         ("confirmacion", zona_confirmacion),
     ]:
-        resultados = reader.readtext(zona, detail=0)
+        resultados = get_reader().readtext(zona, detail=0)
 
         for texto in resultados:
             texto_limpio = texto.lower().strip()

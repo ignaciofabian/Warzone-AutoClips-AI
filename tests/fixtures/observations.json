@@ -1,0 +1,14 @@
+[
+  {"segundo": 0, "texto": ""},
+  {"segundo": 1, "texto": "ELIMINADO: Alpha#123"},
+  {"segundo": 1.5, "texto": "ELIMINADO: Alpha#123"},
+  {"segundo": 2, "texto": "ELIMINADO: Alpha#123"},
+  {"segundo": 3, "texto": "ABATIDO: Beta"},
+  {"segundo": 5, "texto": "ELIMINADO: Beta#456"},
+  {"segundo": 5.5, "texto": "ELIMINADO: Beta#456"},
+  {"segundo": 9, "texto": "ELIMINATED: Gamma#789"},
+  {"segundo": 9.5, "texto": "ELIMINATED: Gamma#789"},
+  {"segundo": 14.5, "texto": ""},
+  {"segundo": 15, "texto": "ELIMINADO: Delta"},
+  {"segundo": 15.5, "texto": "ELIMINADO: Delta"}
+]

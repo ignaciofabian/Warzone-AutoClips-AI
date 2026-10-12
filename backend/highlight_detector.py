@@ -11,6 +11,15 @@ MULTIKILL_WINDOW = 15
 MIN_KILLS = 3
 
 
+def event_bounds(event):
+    bounds = event.get("time_bounds")
+    return (bounds["start"], bounds["end"]) if bounds else (event["segundo"], event["segundo"])
+
+
+def within_window(events):
+    return max(event_bounds(e)[1] for e in events) - min(event_bounds(e)[0] for e in events) <= MULTIKILL_WINDOW
+
+
 def detectar_highlights(eventos):
     kills = sorted(
         [
@@ -26,27 +35,35 @@ def detectar_highlights(eventos):
     grupo = []
 
     for kill in kills:
+        if grupo and kill.get("counter_epoch") != grupo[-1].get("counter_epoch"):
+            if len(grupo) >= MIN_KILLS:
+                highlights.append(crear_highlight(grupo))
+            grupo = [kill]
+            continue
         if not grupo:
             grupo = [kill]
             continue
 
-        # Agrupamos kills que ocurren cerca de la primera del grupo.
-        if kill["segundo"] - grupo[0]["segundo"] <= MULTIKILL_WINDOW:
+        # Ventana móvil: descartar solo kills antiguas si aún no hay multikill.
+        if within_window(grupo + [kill]):
             grupo.append(kill)
         else:
             if len(grupo) >= MIN_KILLS:
                 highlights.append(crear_highlight(grupo))
-            grupo = [kill]
+                grupo = [kill]
+            else:
+                grupo = [evento for evento in grupo if within_window([evento, kill])]
+                grupo.append(kill)
 
-    if len(grupo) >= MIN_KILLS:
+    if len(grupo) >= MIN_KILLS and within_window(grupo):
         highlights.append(crear_highlight(grupo))
 
     return highlights
 
 
 def crear_highlight(grupo):
-    inicio = grupo[0]["segundo"]
-    fin = grupo[-1]["segundo"]
+    inicio = min(event_bounds(e)[0] for e in grupo)
+    fin = max(event_bounds(e)[1] for e in grupo)
 
     return {
         "tipo": "multikill",
@@ -59,6 +76,7 @@ def crear_highlight(grupo):
             kill.get("enemigo", "desconocido")
             for kill in grupo
         ],
+        "event_ids": [kill["id"] for kill in grupo if "id" in kill],
         "estado": "pendiente_revision",
     }
 
